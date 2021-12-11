@@ -18,9 +18,14 @@ def chunks(list_: List, size: int):
 class BingoBoard:
     board: np.ndarray
     checked: np.ndarray = field(init=False, default_factory=lambda: np.zeros((5,5), dtype=bool))
+    has_won: bool = False
+    final_score: int = field(init=False, default=None)
 
     def draw(self, num: int):
         self.checked[self.board == num] = True
+        self.has_won = self.has_bingo()
+        if self.has_won:
+            self.final_score = self._get_score(num)
 
     def has_bingo(self) -> bool:
         for i in range(5):
@@ -29,7 +34,7 @@ class BingoBoard:
         # Diagonal 1?
         # Diagonal 2?
 
-    def get_score(self, last_draw: int) -> int:
+    def _get_score(self, last_draw: int) -> int:
         unmarked = self.board[np.logical_not(self.checked)]
         return last_draw * np.sum(unmarked)
 
@@ -41,14 +46,23 @@ for bingo_lines in chunks(lines[1:], 6):
     board = BingoBoard(np.array(values))
     boards.append(board)
 
-bingo = False
+first_winner_idx, first_winner = None, None
+last_winner_idx, last_winner = None, None
 for draw in draws:
     for i, board in enumerate(list(boards)):
-        board.draw(draw)
-        if board.has_bingo():
-            bingo = True
-            print(f"Bingo for board {i}!:)")
-            print(f"\t{board!r}")
-            print(f"Score: {board.get_score(draw)}")
-    if bingo:
-        break
+        if not board.has_won:
+            board.draw(draw)
+            if board.has_won:
+                last_winner_idx = i
+                last_winner = board
+        if first_winner is None and board.has_won:
+            first_winner_idx = i
+            first_winner = board
+
+print(f"First bingo was for board {first_winner_idx}!:)")
+print(f"\t{first_winner!r}")
+print(f"Score: {first_winner.final_score}")
+
+print(f"Last bingo was for board {last_winner_idx}!:)")
+print(f"\t{last_winner!r}")
+print(f"Score: {last_winner.final_score}")
