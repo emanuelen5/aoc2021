@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 import re
+import numpy as np
 
 with open("data.txt") as f:
     lines = [line.strip() for line in f.readlines()]
@@ -15,39 +16,29 @@ def chunks(list_: List, size: int):
 
 @dataclass
 class BingoBoard:
-    board: List[List[int]]
-    checked: List[List[bool]] = field(init=False, default_factory=lambda: [[False for _ in range(5)] for _ in range(5)])
+    board: np.ndarray
+    checked: np.ndarray = field(init=False, default_factory=lambda: np.zeros((5,5), dtype=bool))
 
     def draw(self, num: int):
-        for r, row in enumerate(self.board):
-            try:
-                idx = row.index(num)
-                self.checked[r][idx] = True
-            except ValueError:
-                pass
+        self.checked[self.board == num] = True
 
     def has_bingo(self) -> bool:
-        # Horizontal
         for i in range(5):
-            if all(self.checked[i]):
-                return True
-        # Vertical
-        for i in range(5):
-            vert = [self.checked[j][i] for j in range(5)]
-            if all(vert):
+            if all(self.checked[i, :]) or all(self.checked[:, i]):
                 return True
         # Diagonal 1?
         # Diagonal 2?
 
-    def get_score(self, last_num: int) -> int:
-
+    def get_score(self, last_draw: int) -> int:
+        unmarked = self.board[np.logical_not(self.checked)]
+        return last_draw * np.sum(unmarked)
 
 
 boards = []
 re_pattern = re.compile(" +")
 for bingo_lines in chunks(lines[1:], 6):
     values = [[int(l) for l in re_pattern.split(line.strip())] for line in bingo_lines[1:]]
-    board = BingoBoard(values)
+    board = BingoBoard(np.array(values))
     boards.append(board)
 
 bingo = False
@@ -56,8 +47,8 @@ for draw in draws:
         board.draw(draw)
         if board.has_bingo():
             bingo = True
-            print(f"Bingo for board {i}! {board!r}")
+            print(f"Bingo for board {i}!:)")
+            print(f"\t{board!r}")
+            print(f"Score: {board.get_score(draw)}")
     if bingo:
         break
-
-
