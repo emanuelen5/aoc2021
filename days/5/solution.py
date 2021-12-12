@@ -25,9 +25,6 @@ class Line:
     def is_diagonal_up(self) -> bool:
         return (self.x2 - self.x1) == -(self.y2 - self.y1)
 
-    def length(self) -> int:
-        return max(abs(self.x2 - self.x1) + 1, abs(self.y2 - self.y1) + 1)
-
     @classmethod
     def from_line(cls, line: str):
         m = re_pattern.match(line)
@@ -59,21 +56,15 @@ for line in lines:
         grid1[line.y1, min_x:max_x + 1] += 1
         grid2[line.y1, min_x:max_x + 1] += 1
     elif line.is_diagonal_down():
-        for x, y in zip(range(min_x, max_x), range(min_y, max_y)):
+        for x, y in zip(range(min_x, max_x + 1), range(min_y, max_y + 1)):
             grid2[y, x] += 1
     elif line.is_diagonal_up():
-        for x, y in zip(range(min_x, max_x), range(max_y, min_y, -1)):
+        for x, y in zip(range(min_x, max_x + 1), range(max_y, min_y - 1, -1)):
             grid2[y, x] += 1
     else:
-        print(line)
+        print(f"Unhandled line: {line}")
 
 atleast_2_part1 = np.count_nonzero(grid1 >= 2)
 atleast_2_part2 = np.count_nonzero(grid2 >= 2)
 print(f"Part 1: At least two overlaps {atleast_2_part1}")
 print(f"Part 2: At least two overlaps {atleast_2_part2}")
-
-print(np.sum(grid2))
-print(sum(line.length() for line in lines))
-
-# Guesses
-# 20639 too low
