@@ -7,11 +7,11 @@ parser = ArgumentParser()
 parser.add_argument("--input-file", "-i", default=Path(__file__).parent / "data.txt")
 args = parser.parse_args()
 
-energy_levels = np.empty((10, 10), dtype=int)
+energy_levels0 = np.empty((10, 10), dtype=int)
 with open(args.input_file) as f:
     for i, line in enumerate(f.readlines()):
         for j, c in enumerate(line.strip()):
-            energy_levels[i][j] = int(c)
+            energy_levels0[i][j] = int(c)
 
 
 def step(energy_levels):
@@ -29,10 +29,21 @@ def step(energy_levels):
 
 
 flash_count = 0
-for _ in range(100):
+energy_levels = energy_levels0.copy()
+for i in range(100):
     flashes, energy_levels = step(energy_levels)
     flash_count += flashes
 
 
-print(f"Part 1: \n{flash_count=}")
-print(f"Part 2: ")
+i = 0
+energy_levels = energy_levels0.copy()
+while True:
+    i += 1
+    flashes, energy_levels = step(energy_levels)
+    if np.all(energy_levels == 0):
+        sync_index = i
+        break
+
+
+print(f"Part 1: {flash_count=}")
+print(f"Part 2: {sync_index=}")
