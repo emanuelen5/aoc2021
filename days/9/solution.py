@@ -31,5 +31,16 @@ for i in range(1, height+1):
 risk = np.sum(height_map[local_minima] + 1)
 
 print(f"Height map: \n{height_map}")
-print(f"Local minima: {local_minima}")
+print(f"Local minima: \n{local_minima}")
 print(f"Part 1: {risk=}")
+
+from skimage.measure import label
+labels = label(height_map < 9, connectivity=1)
+print(f"Labels: \n{labels}")
+
+basin_sizes = {i: np.count_nonzero(labels == i) for i in range(1, np.amax(labels)+1)}
+print(f"Basin sizes: \n{basin_sizes}")
+
+max_basins = sorted(basin_sizes.values(), reverse=True)
+print(f"Max basins: {max_basins}")
+print(f"Part 2: {max_basins[0] * max_basins[1] * max_basins[2]}")
