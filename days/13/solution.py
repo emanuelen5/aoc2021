@@ -48,7 +48,11 @@ def print_dots(dots: set[tuple[int, ...]]) -> None:
 
 fold_dir, fold_pos = fold_instructions[0]
 dot_positions_first_fold = do_fold(dot_positions, fold_dir, fold_pos)
-print(len(dot_positions_first_fold))
 
-print(f"Part 1: \n")
+print(f"Part 1: {len(dot_positions_first_fold)}\n")
+
 print(f"Part 2: ")
+
+for fold_dir, fold_pos in fold_instructions:
+    dot_positions = do_fold(dot_positions, fold_dir, fold_pos)
+print_dots(dot_positions)
