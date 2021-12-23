@@ -32,7 +32,11 @@ def gen_characters(template, rules: dict[str, dict[str, str]]):
 
 
 def polymerize(template: str, rules: dict[str, dict[str, str]]) -> str:
-    return "".join(c for c in gen_characters(template, rules))
+    buffer = bytearray(2*len(template))
+    i = 0
+    for i, c in enumerate(gen_characters(template, rules)):
+        buffer[i] = ord(c)
+    return buffer[:i].decode("ascii")
 
 
 for i in range(1, 19):
