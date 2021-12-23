@@ -22,7 +22,7 @@ print(f"{insertion_rules=}")
 def polymerize(template: str, rules: list[tuple[str, str]]) -> str:
     insertions = []  # Where to insert each letter
     for pair, insert in rules:
-        for match in re.finditer(pair, template):
+        for match in re.finditer(rf"(?={pair})", template):
             insertions.append((match.start() + 1, insert))
 
     for start, insert in sorted(insertions, key=lambda i: i[0], reverse=True):
