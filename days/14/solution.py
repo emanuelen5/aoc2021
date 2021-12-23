@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 from pathlib import Path
-import re
 import time
 
 parser = ArgumentParser()
@@ -11,24 +10,29 @@ with open(args.input_file) as f:
     lines = f.read().splitlines()
 
 polymer = lines[0]
-insertion_rules = []
+insertion_rules = dict()
 for line in lines[2:]:
     pair, insert = line.split(" -> ")
-    insertion_rules.append((pair, insert))
+    insertion_rules[pair] = insert
 
 print(f"{polymer=}")
 print(f"{insertion_rules=}")
 
 
-def polymerize(template: str, rules: list[tuple[str, str]]) -> str:
-    insertions = []  # Where to insert each letter
-    for pair, insert in rules:
-        for match in re.finditer(rf"(?={pair})", template):
-            insertions.append((match.start() + 1, insert))
+def gen_characters(template, rules: dict[str, str]):
+    last_character = template[0]
+    yield last_character
+    for c in template[1:]:
+        try:
+            yield rules[last_character + c]
+        except KeyError:
+            pass
+        yield c
+        last_character = c
 
-    for start, insert in sorted(insertions, key=lambda i: i[0], reverse=True):
-        template = template[:start] + insert + template[start:]
-    return template
+
+def polymerize(template: str, rules: dict[str, str]) -> str:
+    return "".join(c for c in gen_characters(template, rules))
 
 
 for i in range(1, 16):
