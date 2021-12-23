@@ -13,29 +13,29 @@ polymer = lines[0]
 insertion_rules = dict()
 for line in lines[2:]:
     pair, insert = line.split(" -> ")
-    insertion_rules[pair] = insert
+    if pair[0] not in insertion_rules:
+        insertion_rules[pair[0]] = dict()
+    insertion_rules[pair[0]][pair[1]] = insert
 
 print(f"{polymer=}")
 print(f"{insertion_rules=}")
 
 
-def gen_characters(template, rules: dict[str, str]):
-    last_character = template[0]
-    yield last_character
-    for c in template[1:]:
+def gen_characters(template, rules: dict[str, dict[str, str]]):
+    yield template[0]
+    for last_c, curr_c in zip(template[:-1], template[1:]):
         try:
-            yield rules[last_character + c]
+            yield rules[last_c][curr_c]
         except KeyError:
             pass
-        yield c
-        last_character = c
+        yield curr_c
 
 
-def polymerize(template: str, rules: dict[str, str]) -> str:
+def polymerize(template: str, rules: dict[str, dict[str, str]]) -> str:
     return "".join(c for c in gen_characters(template, rules))
 
 
-for i in range(1, 16):
+for i in range(1, 19):
     start_time = time.time()
     polymer = polymerize(polymer, insertion_rules)
     end_time = time.time()
