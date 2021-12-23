@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
 import re
+import time
 
 parser = ArgumentParser()
 parser.add_argument("--input-file", "-i", default=Path(__file__).parent / "data.txt")
@@ -30,13 +31,15 @@ def polymerize(template: str, rules: list[tuple[str, str]]) -> str:
     return template
 
 
-for i in range(10):
+for i in range(1, 16):
+    start_time = time.time()
     polymer = polymerize(polymer, insertion_rules)
-    print(f"{len(polymer):4}, {polymer=}")
+    end_time = time.time()
+    print(f"{i:2} => {len(polymer)=:4} (time = {end_time - start_time:.6f} s)")
+    letter_counts = {c: polymer.count(c) for c in set(polymer)}
+    print(f"\t{letter_counts=}")
 
-letter_counts = {c: polymer.count(c) for c in set(polymer)}
-
-print(f"{letter_counts=}")
-
-print(f"Part 1: {max(letter_counts.values()) - min(letter_counts.values())}\n")
-print(f"Part 2: ")
+    if i == 10:
+        print(f"Part 1: {max(letter_counts.values()) - min(letter_counts.values())}\n")
+    elif i == 40:
+        print(f"Part 2: {max(letter_counts.values()) - min(letter_counts.values())}\n")
