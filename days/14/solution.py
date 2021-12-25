@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-import time
+from functools import cache
 
 parser = ArgumentParser()
 parser.add_argument("--input-file", "-i", default=Path(__file__).parent / "data.txt")
@@ -21,33 +21,48 @@ print(f"{polymer=}")
 print(f"{insertion_rules=}")
 
 
-def gen_characters(template, rules: dict[str, dict[str, str]]):
-    yield template[0]
-    for last_c, curr_c in zip(template[:-1], template[1:]):
-        try:
-            yield rules[last_c][curr_c]
-        except KeyError:
-            pass
-        yield curr_c
+def increment_letter(dict_, a):
+    dict_[a] = dict_.get(a, 0) + 1
 
 
-def polymerize(template: str, rules: dict[str, dict[str, str]]) -> str:
-    buffer = bytearray(2*len(template))
-    i = 0
-    for i, c in enumerate(gen_characters(template, rules)):
-        buffer[i] = ord(c)
-    return buffer[:i].decode("ascii")
+def merge_letter_counts(a, b) -> dict[str, int]:
+    merged = dict()
+    all_letters = set(a.keys()).union(set(b.keys()))
+    for l in all_letters:
+        merged[l] = a.get(l, 0) + b.get(l, 0)
+    return merged
 
 
-for i in range(1, 19):
-    start_time = time.time()
-    polymer = polymerize(polymer, insertion_rules)
-    end_time = time.time()
-    print(f"{i:2} => {len(polymer)=:4} (time = {end_time - start_time:.6f} s)")
-    letter_counts = {c: polymer.count(c) for c in set(polymer)}
-    print(f"\t{letter_counts=}")
+@cache
+def _polymerize_letter_count(a, b, height: int) -> dict[str, int]:
+    letter_counts = dict()
+    if height == 0:
+        return letter_counts
 
-    if i == 10:
-        print(f"Part 1: {max(letter_counts.values()) - min(letter_counts.values())}\n")
-    elif i == 40:
-        print(f"Part 2: {max(letter_counts.values()) - min(letter_counts.values())}\n")
+    try:
+        c = insertion_rules[a][b]
+        letter_counts = merge_letter_counts(
+            _polymerize_letter_count(a, c, height - 1),
+            _polymerize_letter_count(c, b, height - 1)
+        )
+        increment_letter(letter_counts, c)
+    except KeyError:
+        pass
+
+    return letter_counts
+
+
+def polymerize_letter_count(template, depth: int) -> dict:
+    letter_counts = dict()
+    for l in template:
+        increment_letter(letter_counts, l)
+    for a, b in zip(template[:-1], template[1:]):
+        letter_counts = merge_letter_counts(letter_counts, _polymerize_letter_count(a, b, depth))
+    return letter_counts
+
+
+letter_counts_10 = polymerize_letter_count(polymer, depth=10)
+print(f"Part 1: {max(letter_counts_10.values()) - min(letter_counts_10.values())}\n")
+
+letter_counts_40 = polymerize_letter_count(polymer, depth=40)
+print(f"Part 2: {max(letter_counts_40.values()) - min(letter_counts_40.values())}\n")
