@@ -6,7 +6,7 @@ parser.add_argument("--input-file", "-i", default=Path(__file__).parent / "data.
 args = parser.parse_args()
 
 with open(args.input_file) as f:
-    lines = f.read().splitlines()
+    lines = [l for l in f.read().splitlines() if not l.startswith("#")]
 
 
 def deconstruct(s: str):
@@ -14,31 +14,44 @@ def deconstruct(s: str):
     type_id = int(s[3:6], 2)
     if type_id == 4:  # Literal value
         const = ""
-        i = 6
-        while i < len(s):
-            const += s[i+1:i+5]
-            i += 5
-            if i == 0:
-                break
-        print(f"{const=}")
+        length = 6
+        last = False
+        while not last:
+            last = s[length] == '0'
+            const += s[length+1:length+5]
+            length += 5
         const = int(const, 2)
-        print(f"{const=}")
+        print(f"Constant packet: {const=}")
+        return length, version
     else:
         length_id = s[6]
         if length_id == "0":
-            subpacket_len = int(s[7:7 + 15], 2)
-            print(f"{subpacket_len=}")
-            deconstruct(s[7+15:])
+            length = 7 + 15
+            subpacket_len = int(s[7:length], 2)
+            parsed_len = 0
+            while parsed_len < subpacket_len:
+                print(f"Subpacket {parsed_len}/{subpacket_len} length {{")
+                length_, version_ = deconstruct(s[length + parsed_len:])
+                print("}")
+                parsed_len += length_
+                version = version + version_
+            return length + parsed_len, version
         else:
-            subpacket_count = int(s[7:7+11], 2)
-            print(f"{subpacket_count=}")
-            deconstruct(s[7+11:])
+            length = 7 + 11
+            subpacket_count = int(s[7:length], 2)
+            for i in range(subpacket_count):
+                print(f"Subpacket {i+1}/{subpacket_count} count {{")
+                length_, version_ = deconstruct(s[length:])
+                print("}")
+                version += version_
+                length += length_
+            return length, version
 
 
 for line in lines:
     data = bytearray.fromhex(line)
     bits = "".join(f"{d:08b}" for d in data).rstrip("0")
-    print(deconstruct(bits))
+    length, version = deconstruct(bits)
+    print(f"Part 1. Version sum: {version}")
 
-print(f"Part 1: {0}\n")
 print(f"Part 2: {0}\n")
