@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
+from heapq import heappop, heappush
 import numpy as np
 
 parser = ArgumentParser()
@@ -10,40 +11,32 @@ with open(args.input_file) as f:
     lines = f.read().splitlines()
 
 
-x_size = len(lines[0].strip())
-y_size = len(lines)
-risks = np.zeros((y_size, x_size))
-for i, line in enumerate(lines):
-    for j in range(x_size):
-        risks[i, j] = int(line[j])
+width = len(lines[0].strip())
+height = len(lines)
+risks = np.zeros((height * 5, width * 5))
+for ii in range(5):
+    for jj in range(5):
+        for i, line in enumerate(lines):
+            for j in range(width):
+                risks[i + ii * height, j + jj * width] = ((int(line[j]) + ii + jj - 1) % 9) + 1
 
 total_risks = np.zeros_like(risks)
 total_risks[:] = float('inf')
-last_x = np.zeros_like(risks, dtype=int)
-last_y = np.zeros_like(risks, dtype=int)
-visited = np.zeros_like(risks, dtype=bool)
-exhausted = np.zeros_like(risks, dtype=bool)
+exhausted = {(0, 0)}
+to_visit = [(0, 0, 0)]
 
-visited[0, 0] = True
 total_risks[0, 0] = 0
 
-while not np.alltrue(exhausted):
-    starting_points = np.where(np.logical_and(visited, np.logical_not(exhausted)))
-    values = total_risks[starting_points]
-    start_y, start_x, value = min(zip(starting_points[0], starting_points[1], values), key=lambda k: k[2])
-    starting_point = np.array([start_y, start_x])
+while to_visit:
+    risk, y, x = heappop(to_visit)
 
-    # Left
-    for y, x in (starting_point + [0, -1], starting_point + [1, 0], starting_point + [0, 1], starting_point + [-1, 0]):
-        if not (0 <= x <= x_size - 1) or not (0 <= y <= y_size - 1):
-            continue
-        total_risk = risks[y, x] + total_risks[start_y, start_x]
-        if total_risk < total_risks[y, x]:
-            total_risks[y, x] = total_risk
-            visited[y, x] = True
-    exhausted[start_y, start_x] = True
+    for y_, x_ in ([y, x-1], [y+1, x], [y, x+1], [y-1, x]):
+        if (y_, x_) not in exhausted and (0 <= x_ <= width * 5 - 1) and (0 <= y_ <= height * 5 - 1):
+            total_risk = risks[y_, x_] + risk
+            if total_risk < total_risks[y_, x_]:
+                total_risks[y_, x_] = total_risk
+            heappush(to_visit, (total_risk, y_, x_))
+            exhausted.add((y, x))
 
-total_risk = total_risks[y_size - 1, x_size - 1]
-
-print(f"Part 1: {total_risk:.0f}\n")
-print(f"Part 2: {0}\n")
+print(f"Part 1: {total_risks[height - 1, width - 1]:.0f}\n")
+print(f"Part 2: {total_risks[height * 5 - 1, width * 5 - 1]:.0f}\n")
