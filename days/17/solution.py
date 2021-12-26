@@ -24,8 +24,8 @@ max_vx0 = - 1/2 + math.sqrt(1/2 + 2 * x2)
 
 min_vx0_int = math.ceil(min_vx0)
 max_vx0_int = math.floor(max_vx0)
-vx0 = list(range(min_vx0_int, max_vx0_int))[0]
-vy0 = -min(y1, y2) - 1
+vx0 = list(range(min_vx0_int, max_vx0_int + 1))[0]
+max_vy0 = vy0 = -min(y1, y2) - 1
 print(f"Velocity vx0 range in [{min_vx0_int}, {max_vx0_int}]")
 print(f"Part 1: Initial velocity: {vx0=}, {vy0=}")
 
@@ -50,4 +50,25 @@ max_height = (vy0 + 1) * vy0 / 2
 
 print(f"Landing position: {x}, {y}")
 print(f"Part 1: {vx0, vy0=} => {max_height:.0f}\n")
-print(f"Part 2: {0}\n")
+
+
+def check_if_sticks_landing(vx0, vy0):
+    x, y = 0, 0
+    vx, vy = vx0, vy0
+    while x < x2 and y > y1:
+        x += vx
+        y += vy
+        vx = max(0, vx - 1)
+        vy -= 1
+        if x1 <= x <= x2 and y1 <= y <= y2:
+            return True
+    return False
+
+
+shots = set()
+for vx0 in range(1, x2+1):
+    for vy0 in range(y1, max_vy0 + 1):
+        if check_if_sticks_landing(vx0, vy0):
+            shots.add((vx0, vy0))
+
+print(f"Part 2: {len(shots)=}\n")
