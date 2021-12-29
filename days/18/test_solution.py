@@ -1,4 +1,4 @@
-from solution import calc_magnitude, explode, split, add, needs_explode, needs_split
+from solution import calc_magnitude, explode, split, add, needs_explode, needs_split, Node
 
 
 def test_needs():
@@ -56,3 +56,9 @@ def test_data():
         sum_ = add(sum_, op)
     assert [[[[6,6],[7,6]],[[7,7],[7,0]]],[[[7,7],[7,7]],[[7,8],[9,9]]]] == sum_
     assert 4140 == calc_magnitude(sum_)
+
+
+def test_node():
+    list_ = [[[0, [5, 8]], [[1, 7], [9, 6]]], [[4, [1, 2]], [[1, 4], 2]]]
+    node = Node.from_list(list_)
+    assert list_ == node.as_list()
