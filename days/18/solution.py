@@ -14,51 +14,68 @@ with open(args.input_file) as f:
     lines = f.read().splitlines()
 
 
-def needs_explode(l: op_t, depth: int = 0) -> bool:
-    if depth >= 4:
-        return True
-    if isinstance(l, int):
-        return False
-    return needs_explode(l[0], depth+1) or needs_explode(l[1], depth+1)
-
-
-def needs_split(l: op_t) -> bool:
-    if isinstance(l, int):
-        return l > 9
-    return needs_split(l[0]) or needs_split(l[1])
-
-
-def calc_magnitude(l: op_t) -> int:
-    if isinstance(l, int):
-        return l
-    return calc_magnitude(l[0]) * 3 + calc_magnitude(l[1]) * 2
-
-
 @dataclass
 class Node:
     left: Union["Node", int]
     right: Union["Node", None] = None
     parent: Union["Node", None] = None
 
-    def add_right(self, value: int):
-        pass
-
-    def add_left(self, value: int):
-        pass
-
     def is_leaf(self) -> bool:
         return isinstance(self.left, int)
 
-    def as_list(self) -> list:
+    def as_list(self) -> Union[list, int]:
         if self.is_leaf():
             return self.left
         return [self.left.as_list(), self.right.as_list()]
 
+    def add(self, rh: "Node") -> "Node":
+        node = self._join(rh)
+        to_reduce = True
+        while to_reduce:
+            print("Needs split/explode")
+            if node.needs_split():
+                node, splitted = node.split()
+                continue
+            if node.needs_explode():
+                node, exploded = node.explode()
+                continue
+            to_reduce = False
+        return node
+
+    def _join(self, rh: "Node") -> "Node":
+        return Node.from_list([self.as_list(), rh.as_list()])
+
+    def needs_explode(self, depth: int = 0) -> bool:
+        if depth >= 4:
+            return True
+        if isinstance(self.left, int):
+            return False
+        return self.left.needs_explode(depth + 1) or self.right.needs_explode(depth + 1)
+
+    def explode(self) -> tuple["Node", bool]:
+        return self, False
+
+    def split(self) -> tuple["Node", bool]:
+        return self, False
+
+    def needs_split(self) -> bool:
+        if isinstance(self.left, int):
+            return self.left > 9
+        return self.left.needs_split() or self.right.needs_split()
+
+    def calc_magnitude(self) -> int:
+        if isinstance(self.left, int):
+            return self.left
+        return self.left.calc_magnitude() * 3 + self.right.calc_magnitude() * 2
+
     @classmethod
     def from_list(cls, l: op_t, parent: "Node" = None):
         if isinstance(l, int):
-            return cls(l)
-        return cls(cls.from_list(l[0]), cls.from_list(l[1]), l)
+            return cls(l, parent=parent)
+        self = cls(cls.from_list(l[0]), cls.from_list(l[1]), parent=parent)
+        self.left.parent = self
+        self.right.parent = self
+        return self
 
 
 def _explode(l: op_t, depth: int = 0, parent: op_t = None) -> tuple[op_t, remainder_t, remainder_t, bool]:
@@ -79,10 +96,6 @@ def explode(l: list) -> list:
 
 def split(l: list) -> list:
     return l
-
-
-def add(l1: list, l2: list) -> list:
-    return [l1, l2]
 
 
 print(f"Part 1: {0}\n")
