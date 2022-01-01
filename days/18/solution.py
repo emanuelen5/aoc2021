@@ -33,11 +33,12 @@ class Node:
         to_reduce = True
         while to_reduce:
             print("Needs split/explode")
-            if node.needs_split():
-                node, splitted = node.split()
+            break
+            node, splitted = node.split()
+            if splitted:
                 continue
-            if node.needs_explode():
-                node, exploded = node.explode()
+            node, exploded = node.explode()
+            if exploded:
                 continue
             to_reduce = False
         return node
@@ -56,6 +57,23 @@ class Node:
         return self, False
 
     def split(self) -> tuple["Node", bool]:
+        if self.is_leaf() and self.left >= 10:
+            left_value = self.left // 2
+            right_value = (self.left + 1) // 2
+            self.left = Node(left_value, parent=self)
+            self.right = Node(right_value, parent=self)
+            return self, True
+        elif self.is_leaf():
+            return self, False
+
+        left_node, splitted = self.left.split()
+        if splitted:
+            self.left = left_node
+            return self, True
+        right_node, splitted = self.right.split()
+        if splitted:
+            self.right = right_node
+            return self, True
         return self, False
 
     def needs_split(self) -> bool:

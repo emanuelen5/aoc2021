@@ -1,4 +1,7 @@
 from solution import Node
+from typing import Union
+
+op_t = Union[list, int]
 
 
 def test_needs():
@@ -16,6 +19,18 @@ def test_magnitude():
     assert Node.from_list([[[[3, 0], [5, 3]], [4, 4]], [5, 5]]).calc_magnitude() == 791
     assert Node.from_list([[[[5, 0], [7, 4]], [5, 5]], [6, 6]]).calc_magnitude() == 1137
     assert Node.from_list([[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]).calc_magnitude() == 3488
+
+
+def split(l: op_t) -> list:
+    node, splitted = Node.from_list(l).split()
+    return node.as_list()
+
+
+def test_split():
+    assert split(10) == [5, 5]
+    assert split(11) == [5, 6]
+    assert split(12) == [6, 6]
+    assert split([12, 12]) == [[6, 6], 12]
 
 
 def test_explode():
