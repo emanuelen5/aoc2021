@@ -1,7 +1,23 @@
 from solution import Snailnumber
 from typing import Union
+from solution import add_from_list, addition_combinations
+import numpy as np
 
 op_t = Union[list, int]
+
+
+test_data_ = [
+    [[[0, [5, 8]], [[1, 7], [9, 6]]], [[4, [1, 2]], [[1, 4], 2]]],
+    [[[5, [2, 8]], 4], [5, [[9, 9], 0]]],
+    [6, [[[6, 2], [5, 6]], [[7, 6], [4, 7]]]],
+    [[[6, [0, 7]], [0, 9]], [4, [9, [9, 0]]]],
+    [[[7, [6, 4]], [3, [1, 3]]], [[[5, 5], 1], 9]],
+    [[6, [[7, 3], [3, 2]]], [[[3, 8], [5, 7]], 4]],
+    [[[[5, 4], [7, 7]], 8], [[8, 3], 8]],
+    [[9, 3], [[9, 9], [6, [4, 9]]]],
+    [[2, [[7, 7], 7]], [[5, 8], [[9, 3], [0, 2]]]],
+    [[[[5, 2], 5], [8, [3, 7]]], [[5, [7, 5]], [4, 4]]],
+]
 
 
 def test_send_left():
@@ -150,25 +166,16 @@ def test_add():
            [[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]
 
 
-def test_data():
-    test_data_ = [
-        [[[0, [5, 8]], [[1, 7], [9, 6]]], [[4, [1, 2]], [[1, 4], 2]]],
-        [[[5, [2, 8]], 4], [5, [[9, 9], 0]]],
-        [6, [[[6, 2], [5, 6]], [[7, 6], [4, 7]]]],
-        [[[6, [0, 7]], [0, 9]], [4, [9, [9, 0]]]],
-        [[[7, [6, 4]], [3, [1, 3]]], [[[5, 5], 1], 9]],
-        [[6, [[7, 3], [3, 2]]], [[[3, 8], [5, 7]], 4]],
-        [[[[5, 4], [7, 7]], 8], [[8, 3], 8]],
-        [[9, 3], [[9, 9], [6, [4, 9]]]],
-        [[2, [[7, 7], 7]], [[5, 8], [[9, 3], [0, 2]]]],
-        [[[[5, 2], 5], [8, [3, 7]]], [[5, [7, 5]], [4, 4]]],
-    ]
-    node = Snailnumber.from_list(test_data_[0])
-    for op in test_data_[1:]:
-        op = Snailnumber.from_list(op)
-        node = node + op
+def test_data_part1():
+    node = add_from_list(test_data_)
     assert node.as_list() == [[[[6, 6], [7, 6]], [[7, 7], [7, 0]]], [[[7, 7], [7, 7]], [[7, 8], [9, 9]]]]
     assert node.calc_magnitude() == 4140
+
+
+def test_data_part2():
+    comb_matrix = addition_combinations(test_data_)
+    # Actually fails for test data for some reason...
+    assert np.amax(comb_matrix, axis=None) == 3993
 
 
 def test_node():
