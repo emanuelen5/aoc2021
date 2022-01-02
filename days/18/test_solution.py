@@ -95,16 +95,22 @@ def test_split():
     assert split([12, 12]) == [[6, 6], 12]
 
 
+def explode(l: list) -> list:
+    node = Node.from_list(l)
+    node.explode()
+    return node.as_list()
+
+
 def test_explode():
-    assert Node.from_list([[[[[9, 8], 1], 2], 3], 4]).explode().as_list() == \
+    assert explode([[[[[9, 8], 1], 2], 3], 4]) == \
            [[[[0, 9], 2], 3], 4]
-    assert Node.from_list([7, [6, [5, [4, [3, 2]]]]]).as_list() == \
+    assert explode([7, [6, [5, [4, [3, 2]]]]]) == \
            [7, [6, [5, [7, 0]]]]
-    assert Node.from_list([[6, [5, [4, [3, 2]]]], 1]).as_list() == \
+    assert explode([[6, [5, [4, [3, 2]]]], 1]) == \
            [[6, [5, [7, 0]]], 3]
-    assert Node.from_list([[3, [2, [1, [7, 3]]]], [6, [5, [4, [3, 2]]]]]).as_list() == \
+    assert explode([[3, [2, [1, [7, 3]]]], [6, [5, [4, [3, 2]]]]]) == \
            [[3, [2, [8, 0]]], [9, [5, [4, [3, 2]]]]]
-    assert Node.from_list([[3, [2, [8, 0]]], [9, [5, [4, [3, 2]]]]]).as_list() == \
+    assert explode([[3, [2, [8, 0]]], [9, [5, [4, [3, 2]]]]]) == \
            [[3, [2, [8, 0]]], [9, [5, [7, 0]]]]
 
 
