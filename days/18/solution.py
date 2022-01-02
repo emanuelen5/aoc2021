@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import copy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Union
@@ -29,16 +30,14 @@ class Node:
         return [self.left.as_list(), self.right.as_list()]
 
     def add(self, rh: "Node") -> "Node":
-        node = self._join(rh)
+        node = copy.deepcopy(self._join(rh))
         to_reduce = True
         while to_reduce:
-            print("Needs split/explode")
-            break  # TODO
+            exploded = node.explode()
+            if exploded:
+                continue
             node, splitted = node.split()
             if splitted:
-                continue
-            node, exploded = node.explode()
-            if exploded:
                 continue
             to_reduce = False
         return node
