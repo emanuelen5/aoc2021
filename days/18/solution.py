@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Union
 
@@ -18,7 +18,7 @@ with open(args.input_file) as f:
 class Node:
     left: Union["Node", int]
     right: Union["Node", None] = None
-    parent: Union["Node", None] = None
+    parent: Union["Node", None] = field(repr=False, default=None)
 
     def is_leaf(self) -> bool:
         return isinstance(self.left, int)
@@ -33,7 +33,7 @@ class Node:
         to_reduce = True
         while to_reduce:
             print("Needs split/explode")
-            break
+            break  # TODO
             node, splitted = node.split()
             if splitted:
                 continue
@@ -53,8 +53,52 @@ class Node:
             return False
         return self.left.needs_explode(depth + 1) or self.right.needs_explode(depth + 1)
 
-    def explode(self) -> tuple["Node", bool]:
-        return self, False
+    def explode(self, depth: int = 0) -> bool:
+        if isinstance(self.left, int):
+            return False
+        if depth >= 4:
+            if not self.left.is_leaf() or not self.right.is_leaf():
+                raise ValueError(f"Both left and right needs to be leafs. Got {self.left=} and {self.right=}.")
+            self._send_left(self.left.left)
+            self._send_right(self.right.left)
+            self.left = 0
+            self.right = None
+            return True
+        return self.left.explode(depth + 1) or self.right.explode(depth + 1)
+
+    def _send_left(self, value: int):
+        if self.parent is None:
+            return
+        # Go up until at parent with a left
+        node = self
+        while True:
+            if not node.parent:
+                return
+            if id(node) == id(node.parent.right):
+                node = node.parent
+                break
+            node = node.parent
+        node = node.left
+        while not node.is_leaf():
+            node = node.right
+        node.left += value
+
+    def _send_right(self, value: int):
+        if self.parent is None:
+            return
+        # Go up until at parent with a right
+        node = self
+        while True:
+            if not node.parent:
+                return
+            if id(node) == id(node.parent.left):
+                node = node.parent
+                break
+            node = node.parent
+        node = node.right
+        while not node.is_leaf():
+            node = node.left
+        node.left += value
 
     def split(self) -> tuple["Node", bool]:
         if self.is_leaf() and self.left >= 10:
@@ -94,6 +138,9 @@ class Node:
         self.left.parent = self
         self.right.parent = self
         return self
+
+    def __repr__(self):
+        return f"<{self.as_list()}>"
 
 
 def _explode(l: op_t, depth: int = 0, parent: op_t = None) -> tuple[op_t, remainder_t, remainder_t, bool]:

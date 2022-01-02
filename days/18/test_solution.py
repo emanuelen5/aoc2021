@@ -4,6 +4,68 @@ from typing import Union
 op_t = Union[list, int]
 
 
+def test_send_left():
+    node = Node.from_list([0, 0])
+    node.right._send_left(1)
+    assert node.as_list() == [1, 0]
+
+    node = Node.from_list([[0, 0], 0])
+    node.right._send_left(1)
+    assert node.as_list() == [[0, 1], 0]
+
+    node = Node.from_list([0, [0, 0]])
+    node.right.left._send_left(1)
+    assert node.as_list() == [1, [0, 0]]
+
+    node = Node.from_list([[0, 0], [0, 0]])
+    node.right.left._send_left(1)
+    assert node.as_list() == [[0, 1], [0, 0]]
+
+    node = Node.from_list([[0, [0, 0]], [0, 0]])
+    node.right.left._send_left(1)
+    assert node.as_list() == [[0, [0, 1]], [0, 0]]
+
+    # Nothing at left
+    node = Node.from_list([0, [0, 0]])
+    node.left._send_left(1)
+    assert node.as_list() == [0, [0, 0]]
+
+    node = Node.from_list([[0, 0], [0, 0]])
+    node.left.left._send_left(1)
+    assert node.as_list() == [[0, 0], [0, 0]]
+
+
+def test_send_right():
+    node = Node.from_list([0, 0])
+    node.left._send_right(1)
+    assert node.as_list() == [0, 1]
+
+    node = Node.from_list([0, [0, 0]])
+    node.left._send_right(1)
+    assert node.as_list() == [0, [1, 0]]
+
+    node = Node.from_list([[0, 0], 0])
+    node.left.right._send_right(1)
+    assert node.as_list() == [[0, 0], 1]
+
+    node = Node.from_list([[0, 0], [0, 0]])
+    node.left.right._send_right(1)
+    assert node.as_list() == [[0, 0], [1, 0]]
+
+    node = Node.from_list([[0, 0], [[0, 0], 0]])
+    node.left.right._send_right(1)
+    assert node.as_list() == [[0, 0], [[1, 0], 0]]
+
+    # Nothing at right
+    node = Node.from_list([0, [0, 0]])
+    node.right._send_right(1)
+    assert node.as_list() == [0, [0, 0]]
+
+    node = Node.from_list([[0, 0], [0, 0]])
+    node.right.right._send_right(1)
+    assert node.as_list() == [[0, 0], [0, 0]]
+
+
 def test_needs():
     assert Node.from_list([[[[[4, 3], 4], 4], [7, [[8, 4], 9]]], [1, 1]]).needs_explode()
     assert Node.from_list([[[[0, 7], 4], [7, [[8, 4], 9]]], [1, 1]]).needs_explode()
@@ -34,7 +96,7 @@ def test_split():
 
 
 def test_explode():
-    assert Node.from_list([[[[[9, 8], 1], 2], 3], 4]).as_list() == \
+    assert Node.from_list([[[[[9, 8], 1], 2], 3], 4]).explode().as_list() == \
            [[[[0, 9], 2], 3], 4]
     assert Node.from_list([7, [6, [5, [4, [3, 2]]]]]).as_list() == \
            [7, [6, [5, [7, 0]]]]
