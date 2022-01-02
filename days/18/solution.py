@@ -16,10 +16,10 @@ with open(args.input_file) as f:
 
 
 @dataclass
-class Node:
-    left: Union["Node", int]
-    right: Union["Node", None] = None
-    parent: Union["Node", None] = field(repr=False, default=None)
+class Snailnumber:
+    left: Union["Snailnumber", int]
+    right: Union["Snailnumber", None] = None
+    parent: Union["Snailnumber", None] = field(repr=False, default=None)
 
     def is_leaf(self) -> bool:
         return isinstance(self.left, int)
@@ -29,8 +29,10 @@ class Node:
             return self.left
         return [self.left.as_list(), self.right.as_list()]
 
-    def add(self, rh: "Node") -> "Node":
-        node = copy.deepcopy(self._join(rh))
+    def __add__(self, other: "Snailnumber") -> "Snailnumber":
+        if isinstance(other, list) or isinstance(other, int):
+            other = Snailnumber.from_list(other)
+        node = copy.deepcopy(self._join(other))
         to_reduce = True
         while to_reduce:
             exploded = node.explode()
@@ -42,15 +44,8 @@ class Node:
             to_reduce = False
         return node
 
-    def _join(self, rh: "Node") -> "Node":
-        return Node.from_list([self.as_list(), rh.as_list()])
-
-    def needs_explode(self, depth: int = 0) -> bool:
-        if depth >= 4:
-            return True
-        if isinstance(self.left, int):
-            return False
-        return self.left.needs_explode(depth + 1) or self.right.needs_explode(depth + 1)
+    def _join(self, rh: "Snailnumber") -> "Snailnumber":
+        return Snailnumber.from_list([self.as_list(), rh.as_list()])
 
     def explode(self, depth: int = 0) -> bool:
         if isinstance(self.left, int):
@@ -99,12 +94,12 @@ class Node:
             node = node.left
         node.left += value
 
-    def split(self) -> tuple["Node", bool]:
+    def split(self) -> tuple["Snailnumber", bool]:
         if self.is_leaf() and self.left >= 10:
             left_value = self.left // 2
             right_value = (self.left + 1) // 2
-            self.left = Node(left_value, parent=self)
-            self.right = Node(right_value, parent=self)
+            self.left = Snailnumber(left_value, parent=self)
+            self.right = Snailnumber(right_value, parent=self)
             return self, True
         elif self.is_leaf():
             return self, False
@@ -119,18 +114,13 @@ class Node:
             return self, True
         return self, False
 
-    def needs_split(self) -> bool:
-        if isinstance(self.left, int):
-            return self.left > 9
-        return self.left.needs_split() or self.right.needs_split()
-
     def calc_magnitude(self) -> int:
         if isinstance(self.left, int):
             return self.left
         return self.left.calc_magnitude() * 3 + self.right.calc_magnitude() * 2
 
     @classmethod
-    def from_list(cls, l: op_t, parent: "Node" = None):
+    def from_list(cls, l: op_t, parent: "Snailnumber" = None):
         if isinstance(l, int):
             return cls(l, parent=parent)
         self = cls(cls.from_list(l[0]), cls.from_list(l[1]), parent=parent)
@@ -140,26 +130,6 @@ class Node:
 
     def __repr__(self):
         return f"<{self.as_list()}>"
-
-
-def _explode(l: op_t, depth: int = 0, parent: op_t = None) -> tuple[op_t, remainder_t, remainder_t, bool]:
-    if isinstance(l, int):
-        return l, None, None, False
-    if depth == 4:
-        return 0, l[0], l[1], True
-    l_new, rem_l, rem_r, done = _explode(l[0], depth+1, l)
-    l[0] = l_new
-    if not done:
-        r_new, rem_l, rem_r, done = _explode(l[1], depth+1, l)
-    return l_new, None, None, done
-
-
-def explode(l: list) -> list:
-    return _explode(l)
-
-
-def split(l: list) -> list:
-    return l
 
 
 print(f"Part 1: {0}\n")

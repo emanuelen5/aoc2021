@@ -1,90 +1,83 @@
-from solution import Node
+from solution import Snailnumber
 from typing import Union
 
 op_t = Union[list, int]
 
 
 def test_send_left():
-    node = Node.from_list([0, 0])
+    node = Snailnumber.from_list([0, 0])
     node.right._send_left(1)
     assert node.as_list() == [1, 0]
 
-    node = Node.from_list([[0, 0], 0])
+    node = Snailnumber.from_list([[0, 0], 0])
     node.right._send_left(1)
     assert node.as_list() == [[0, 1], 0]
 
-    node = Node.from_list([0, [0, 0]])
+    node = Snailnumber.from_list([0, [0, 0]])
     node.right.left._send_left(1)
     assert node.as_list() == [1, [0, 0]]
 
-    node = Node.from_list([[0, 0], [0, 0]])
+    node = Snailnumber.from_list([[0, 0], [0, 0]])
     node.right.left._send_left(1)
     assert node.as_list() == [[0, 1], [0, 0]]
 
-    node = Node.from_list([[0, [0, 0]], [0, 0]])
+    node = Snailnumber.from_list([[0, [0, 0]], [0, 0]])
     node.right.left._send_left(1)
     assert node.as_list() == [[0, [0, 1]], [0, 0]]
 
     # Nothing at left
-    node = Node.from_list([0, [0, 0]])
+    node = Snailnumber.from_list([0, [0, 0]])
     node.left._send_left(1)
     assert node.as_list() == [0, [0, 0]]
 
-    node = Node.from_list([[0, 0], [0, 0]])
+    node = Snailnumber.from_list([[0, 0], [0, 0]])
     node.left.left._send_left(1)
     assert node.as_list() == [[0, 0], [0, 0]]
 
 
 def test_send_right():
-    node = Node.from_list([0, 0])
+    node = Snailnumber.from_list([0, 0])
     node.left._send_right(1)
     assert node.as_list() == [0, 1]
 
-    node = Node.from_list([0, [0, 0]])
+    node = Snailnumber.from_list([0, [0, 0]])
     node.left._send_right(1)
     assert node.as_list() == [0, [1, 0]]
 
-    node = Node.from_list([[0, 0], 0])
+    node = Snailnumber.from_list([[0, 0], 0])
     node.left.right._send_right(1)
     assert node.as_list() == [[0, 0], 1]
 
-    node = Node.from_list([[0, 0], [0, 0]])
+    node = Snailnumber.from_list([[0, 0], [0, 0]])
     node.left.right._send_right(1)
     assert node.as_list() == [[0, 0], [1, 0]]
 
-    node = Node.from_list([[0, 0], [[0, 0], 0]])
+    node = Snailnumber.from_list([[0, 0], [[0, 0], 0]])
     node.left.right._send_right(1)
     assert node.as_list() == [[0, 0], [[1, 0], 0]]
 
     # Nothing at right
-    node = Node.from_list([0, [0, 0]])
+    node = Snailnumber.from_list([0, [0, 0]])
     node.right._send_right(1)
     assert node.as_list() == [0, [0, 0]]
 
-    node = Node.from_list([[0, 0], [0, 0]])
+    node = Snailnumber.from_list([[0, 0], [0, 0]])
     node.right.right._send_right(1)
     assert node.as_list() == [[0, 0], [0, 0]]
 
 
-def test_needs():
-    assert Node.from_list([[[[[4, 3], 4], 4], [7, [[8, 4], 9]]], [1, 1]]).needs_explode()
-    assert Node.from_list([[[[0, 7], 4], [7, [[8, 4], 9]]], [1, 1]]).needs_explode()
-    assert Node.from_list([[[[0, 7], 4], [15, [0, 13]]], [1, 1]]).needs_split()
-    assert Node.from_list([[[[0, 7], 4], [[7, 8], [0, 13]]], [1, 1]]).needs_split()
-    assert Node.from_list([[[[0, 7], 4], [[7, 8], [0, [6, 7]]]], [1, 1]]).needs_explode()
-
-
 def test_magnitude():
-    assert Node.from_list([[1, 2], [[3, 4], 5]]).calc_magnitude() == 143
-    assert Node.from_list([[[[0, 7], 4], [[7, 8], [6, 0]]], [8, 1]]).calc_magnitude() == 1384
-    assert Node.from_list([[[[1, 1], [2, 2]], [3, 3]], [4, 4]]).calc_magnitude() == 445
-    assert Node.from_list([[[[3, 0], [5, 3]], [4, 4]], [5, 5]]).calc_magnitude() == 791
-    assert Node.from_list([[[[5, 0], [7, 4]], [5, 5]], [6, 6]]).calc_magnitude() == 1137
-    assert Node.from_list([[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]).calc_magnitude() == 3488
+    assert Snailnumber.from_list([[1, 2], [[3, 4], 5]]).calc_magnitude() == 143
+    assert Snailnumber.from_list([[[[0, 7], 4], [[7, 8], [6, 0]]], [8, 1]]).calc_magnitude() == 1384
+    assert Snailnumber.from_list([[[[1, 1], [2, 2]], [3, 3]], [4, 4]]).calc_magnitude() == 445
+    assert Snailnumber.from_list([[[[3, 0], [5, 3]], [4, 4]], [5, 5]]).calc_magnitude() == 791
+    assert Snailnumber.from_list([[[[5, 0], [7, 4]], [5, 5]], [6, 6]]).calc_magnitude() == 1137
+    assert Snailnumber.from_list(
+        [[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]).calc_magnitude() == 3488
 
 
 def split(l: op_t) -> list:
-    node, splitted = Node.from_list(l).split()
+    node, splitted = Snailnumber.from_list(l).split()
     return node.as_list()
 
 
@@ -96,7 +89,7 @@ def test_split():
 
 
 def explode(l: list) -> list:
-    node = Node.from_list(l)
+    node = Snailnumber.from_list(l)
     node.explode()
     return node.as_list()
 
@@ -115,7 +108,7 @@ def test_explode():
 
 
 def add(lh: list, rh: list) -> list:
-     return Node.from_list(lh).add(Node.from_list(rh)).as_list()
+    return (Snailnumber.from_list(lh) + Snailnumber.from_list(rh)).as_list()
 
 
 def test_add():
@@ -170,15 +163,15 @@ def test_data():
         [[2, [[7, 7], 7]], [[5, 8], [[9, 3], [0, 2]]]],
         [[[[5, 2], 5], [8, [3, 7]]], [[5, [7, 5]], [4, 4]]],
     ]
-    node = Node.from_list(test_data_[0])
+    node = Snailnumber.from_list(test_data_[0])
     for op in test_data_[1:]:
-        op = Node.from_list(op)
-        node = node.add(op)
+        op = Snailnumber.from_list(op)
+        node = node + op
     assert node.as_list() == [[[[6, 6], [7, 6]], [[7, 7], [7, 0]]], [[[7, 7], [7, 7]], [[7, 8], [9, 9]]]]
     assert node.calc_magnitude() == 4140
 
 
 def test_node():
     list_ = [[[0, [5, 8]], [[1, 7], [9, 6]]], [[4, [1, 2]], [[1, 4], 2]]]
-    node = Node.from_list(list_)
+    node = Snailnumber.from_list(list_)
     assert list_ == node.as_list()
