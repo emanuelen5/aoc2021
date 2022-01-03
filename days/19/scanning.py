@@ -129,16 +129,15 @@ class Scanning:
 
         return max_equal, offset
 
-    def find_cross_correlation(self, other: "Scanning") -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
+    def find_cross_correlation(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
         rot_perms = self.create_rotation_permutations()
         max_equal = 0
         best_angle = (0, 0, 0)
         best_offset = (0, 0, 0)
 
         # Do a fast comparison first for early exit
-        threshold = 12
         common_distances = self.compare_fingerprint(other)
-        if common_distances < threshold * (threshold - 1) / 2:
+        if threshold and common_distances < threshold * (threshold - 1) / 2:
             return max_equal, best_angle, best_offset
 
         for i, (angles, rot_perm) in enumerate(rot_perms):
@@ -147,7 +146,7 @@ class Scanning:
                 max_equal = equal_count
                 best_angle = angles
                 best_offset = offset
-                if equal_count >= threshold:
+                if threshold and equal_count >= threshold:
                     return max_equal, best_angle, best_offset
         return max_equal, best_angle, best_offset
 

@@ -44,7 +44,7 @@ def scanning_origin():
         [1, 0, 1],
         [1, 1, 0],
         [1, 1, 10],
-    ]))
+    ]), id=5000)
 
 
 def test_cross_correlate_translation(scanning_origin):
@@ -80,7 +80,7 @@ def test_find_cross_correlation(scanning_origin):
     offset = np.array([1, 1, 1])
     angle, scanning2 = random.choice(scanning_origin.create_rotation_permutations())
     scanning2 = scanning2 - offset
-    count, corr_angle, corr_offset = scanning_origin.find_cross_correlation(scanning2)
+    count, corr_angle, corr_offset = scanning_origin.find_cross_correlation(scanning2, threshold=None)
     assert count == len(scanning_origin.scans)
     assert corr_angle == angle
     assert corr_offset == tuple(offset)

@@ -15,7 +15,7 @@ if __name__ == "__main__":
         for j, scanning2 in enumerate(scannings):
             if i <= j:
                 continue
-            corr_count, corr_angle, corr_offset = scanning1.find_cross_correlation(scanning2)
+            corr_count, corr_angle, corr_offset = scanning1.find_cross_correlation(scanning2, threshold=12)
             if corr_count >= 12:
                 results.append((i, j, corr_count, corr_angle, corr_offset))
 
