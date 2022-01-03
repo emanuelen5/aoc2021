@@ -136,16 +136,19 @@ class Scanning:
         best_offset = (0, 0, 0)
 
         # Do a fast comparison first for early exit
+        threshold = 12
         common_distances = self.compare_fingerprint(other)
-        if common_distances < 12 * 11 / 2:
+        if common_distances < threshold * (threshold - 1) / 2:
             return max_equal, best_angle, best_offset
 
         for i, (angles, rot_perm) in enumerate(rot_perms):
-            equal_count, offset = rot_perm.cross_correlate(other, threshold=12)
+            equal_count, offset = rot_perm.cross_correlate(other, threshold=threshold)
             if equal_count > max_equal:
                 max_equal = equal_count
                 best_angle = angles
                 best_offset = offset
+                if equal_count >= threshold:
+                    return max_equal, best_angle, best_offset
         return max_equal, best_angle, best_offset
 
     def __hash__(self):
