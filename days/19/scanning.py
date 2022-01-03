@@ -101,9 +101,9 @@ class Scanning:
                 intersection = shifted1.intersection(shifted2)
                 if len(intersection) > max_equal:
                     max_equal = len(intersection)
-                    offset = row1 - row2
+                    offset = tuple(row1 - row2)
 
-        return max_equal, tuple(offset)
+        return max_equal, offset
 
     @classmethod
     def read_file(cls, filename: str) -> list["Scanning"]:

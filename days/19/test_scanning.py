@@ -58,8 +58,7 @@ def test_cross_correlate_translation_random_permutation(scanning_origin):
 
 def test_cross_correlate_translation_random_permutation_extras(scanning_origin):
     offset = [1, 1, 1]
-    scans = scanning_origin.scans
-    scans = np.vstack((scans, [[0, -1, -1], [0, 5, 5], [1, 5, 5], [2, 5, 5]]))
+    scans = np.vstack((scanning_origin.scans, [[0, -1, -1], [0, 5, 5], [1, 5, 5], [2, 5, 5]]))
     scans = scans - np.array(offset)
     scans = np.random.permutation(scans)
     scanning2 = Scanning(scans, scanning_origin.id)
