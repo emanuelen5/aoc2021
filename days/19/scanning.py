@@ -159,19 +159,16 @@ class Scanning:
         import re
         with open(filename) as f:
             lines = f.read().splitlines()
-        lines = [line for line in lines if len(line)]
 
         scan_pattern = re.compile(r"^--- scanner (\d+) ---$")
         scanning_values = id_ = None
         scannings = []
         for line in lines:
             if m := scan_pattern.match(line):
-                if scanning_values is not None:
-                    scanning_values = np.array(scanning_values)
-                    scanning = Scanning(scanning_values, id_)
-                    scannings.append(scanning)
                 id_ = int(m.group(1))
                 scanning_values = []
-                continue
-            scanning_values.append([int(v) for v in line.split(",")])
+            elif len(line) == 0:
+                scannings.append(Scanning(np.array(scanning_values), id_))
+            else:
+                scanning_values.append([int(v) for v in line.split(",")])
         return scannings

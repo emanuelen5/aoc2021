@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 import pytest
 import random
 from scanning import Scanning
@@ -6,6 +7,11 @@ from scanning import Scanning
 _seed = 1
 np.random.seed(_seed)
 random.seed(_seed)
+
+
+def test_read_from_file():
+    scannings = Scanning.read_file(str((Path(__file__).parent.joinpath("test_data.txt").absolute())))
+    assert len(scannings) == 5
 
 
 def test_rotation():
