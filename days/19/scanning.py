@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import math
 import numpy as np
 from functools import cache
+from typing import Union
 
 
 @cache
@@ -71,6 +72,17 @@ class Scanning:
             self.rotate(270, 0, -90),
         ]
 
+    def copy(self) -> "Scanning":
+        return Scanning(self.scans.copy(), self.id)
+
+    def __add__(self, other):
+        assert isinstance(other, np.ndarray)
+        return Scanning(self.scans + other, self.id)
+
+    def __sub__(self, other):
+        assert isinstance(other, np.ndarray)
+        return Scanning(self.scans - other, self.id)
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
@@ -78,6 +90,23 @@ class Scanning:
 
     def __repr__(self):
         return f"<Scanning n_scans={len(self.scans)} id={self.id}>"
+
+    def cross_correlate(self, other: "Scanning") -> tuple[int, tuple[int, int, int]]:
+        sorting1 = np.array(sorted(self.scans, key=lambda row: (row[0], row[1], row[2])))
+        sorting2 = np.array(sorted(other.scans, key=lambda row: (row[0], row[1], row[2])))
+
+        max_equal = 0
+        offset = (0, 0, 0)
+        for row1 in sorting1:
+            shifted1 = set((r[0], r[1], r[2]) for r in (sorting1 - row1))
+            for row2 in sorting2:
+                shifted2 = set((r[0], r[1], r[2]) for r in (sorting2 - row2))
+                intersection = shifted1.intersection(shifted2)
+                if len(intersection) > max_equal:
+                    max_equal = len(intersection)
+                    offset = row1 - row2
+
+        return max_equal, tuple(offset)
 
     @classmethod
     def read_file(cls, filename: str) -> list["Scanning"]:
