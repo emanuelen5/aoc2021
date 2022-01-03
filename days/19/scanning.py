@@ -6,22 +6,23 @@ from functools import cache
 
 @cache
 def create_rot_mat(alpha: float, beta: float, gamma: float):
-    rot_x = np.array([
+    rot_x = np.round(np.array([
         [1, 0, 0],
         [0, math.cos(alpha), -math.sin(alpha)],
         [0, math.sin(alpha), math.cos(alpha)]
-    ])
-    rot_y = np.array([
+    ]))
+    rot_y = np.round(np.array([
         [math.cos(beta), 0, math.sin(beta)],
         [0, 1, 0],
         [-math.sin(beta), 0, math.cos(beta)]
-    ])
-    rot_z = np.array([
+    ]))
+    rot_z = np.round(np.array([
         [math.cos(gamma), -math.sin(gamma), 0],
         [math.sin(gamma), math.cos(gamma), 0],
         [0, 0, 1]
-    ])
-    return rot_z * rot_y * rot_x
+    ]))
+    rot_mat = rot_x @ rot_y @ rot_z  # @ is matrix multiplication
+    return rot_mat
 
 
 @dataclass
@@ -37,7 +38,38 @@ class Scanning:
         return self.__class__(scans, self.id)
 
     def create_rotation_permutations(self) -> list["Scanning"]:
-        pass
+        return [
+            # 0
+            self.rotate(0,     0, 0),
+            self.rotate(90,    0, 0),
+            self.rotate(180,   0, 0),
+            self.rotate(270,   0, 0),
+            # 4
+            self.rotate(0,    90, 0),
+            self.rotate(90,   90, 0),
+            self.rotate(180,  90, 0),
+            self.rotate(270,  90, 0),
+            # 8
+            self.rotate(0,   -90, 0),
+            self.rotate(90,  -90, 0),
+            self.rotate(180, -90, 0),
+            self.rotate(270, -90, 0),
+            # 12
+            self.rotate(0,   180, 0),
+            self.rotate(90,  180, 0),
+            self.rotate(180, 180, 0),
+            self.rotate(270, 180, 0),
+            # 16
+            self.rotate(0,   0,  90),
+            self.rotate(90,  0,  90),
+            self.rotate(180, 0,  90),
+            self.rotate(270, 0,  90),
+            # 20
+            self.rotate(0,   0, -90),
+            self.rotate(90,  0, -90),
+            self.rotate(180, 0, -90),
+            self.rotate(270, 0, -90),
+        ]
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
