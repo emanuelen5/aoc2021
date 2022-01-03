@@ -1,8 +1,11 @@
 import numpy as np
 import pytest
+import random
 from scanning import Scanning
 
-np.random.seed(1)
+_seed = 1
+np.random.seed(_seed)
+random.seed(_seed)
 
 
 def test_rotation():
@@ -16,8 +19,8 @@ def test_unique_rotation_permutations():
     scanning = Scanning(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), 1)
     assert scanning.create_rotation_permutations() == scanning.create_rotation_permutations()
     scannings = scanning.create_rotation_permutations()
-    for i, scan1 in enumerate(scannings):
-        for j, scan2 in enumerate(scannings):
+    for i, (angles1, scan1) in enumerate(scannings):
+        for j, (angles2, scan2) in enumerate(scannings):
             if i == j:
                 assert scan1 == scan2, f"{i=}, {j=}: {scan1.scans=}, {scan2.scans=}"
             else:
@@ -34,7 +37,7 @@ def scanning_origin():
         [1, 0, 0],
         [1, 0, 1],
         [1, 1, 0],
-        [1, 1, 1],
+        [1, 1, 10],
     ]))
 
 
@@ -64,4 +67,14 @@ def test_cross_correlate_translation_random_permutation_extras(scanning_origin):
     scanning2 = Scanning(scans, scanning_origin.id)
     count, corr_offset = scanning_origin.cross_correlate(scanning2)
     assert count == len(scanning_origin.scans)
+    assert corr_offset == tuple(offset)
+
+
+def test_find_cross_correlation(scanning_origin):
+    offset = np.array([1, 1, 1])
+    angle, scanning2 = random.choice(scanning_origin.create_rotation_permutations())
+    scanning2 = scanning2 - offset
+    count, corr_angle, corr_offset = scanning_origin.find_cross_correlation(scanning2)
+    assert count == len(scanning_origin.scans)
+    assert corr_angle == angle
     assert corr_offset == tuple(offset)

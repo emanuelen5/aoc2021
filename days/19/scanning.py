@@ -38,39 +38,41 @@ class Scanning:
         scans = np.matmul(self.scans, rot_mat)
         return self.__class__(scans, self.id)
 
-    def create_rotation_permutations(self) -> list["Scanning"]:
-        return [
+    def create_rotation_permutations(self) -> list[tuple[tuple[int, int, int], "Scanning"]]:
+        angle_combinations = [
             # 0
-            self.rotate(0,     0, 0),
-            self.rotate(90,    0, 0),
-            self.rotate(180,   0, 0),
-            self.rotate(270,   0, 0),
+            (0,     0, 0),
+            (90,    0, 0),
+            (180,   0, 0),
+            (270,   0, 0),
             # 4
-            self.rotate(0,    90, 0),
-            self.rotate(90,   90, 0),
-            self.rotate(180,  90, 0),
-            self.rotate(270,  90, 0),
+            (0,    90, 0),
+            (90,   90, 0),
+            (180,  90, 0),
+            (270,  90, 0),
             # 8
-            self.rotate(0,   -90, 0),
-            self.rotate(90,  -90, 0),
-            self.rotate(180, -90, 0),
-            self.rotate(270, -90, 0),
+            (0,   -90, 0),
+            (90,  -90, 0),
+            (180, -90, 0),
+            (270, -90, 0),
             # 12
-            self.rotate(0,   180, 0),
-            self.rotate(90,  180, 0),
-            self.rotate(180, 180, 0),
-            self.rotate(270, 180, 0),
+            (0,   180, 0),
+            (90,  180, 0),
+            (180, 180, 0),
+            (270, 180, 0),
             # 16
-            self.rotate(0,   0,  90),
-            self.rotate(90,  0,  90),
-            self.rotate(180, 0,  90),
-            self.rotate(270, 0,  90),
+            (0,   0,  90),
+            (90,  0,  90),
+            (180, 0,  90),
+            (270, 0,  90),
             # 20
-            self.rotate(0,   0, -90),
-            self.rotate(90,  0, -90),
-            self.rotate(180, 0, -90),
-            self.rotate(270, 0, -90),
+            (0,   0, -90),
+            (90,  0, -90),
+            (180, 0, -90),
+            (270, 0, -90),
         ]
+
+        return [(angles, self.rotate(*angles)) for angles in angle_combinations]
 
     def copy(self) -> "Scanning":
         return Scanning(self.scans.copy(), self.id)
@@ -104,6 +106,19 @@ class Scanning:
                     offset = tuple(row1 - row2)
 
         return max_equal, offset
+
+    def find_cross_correlation(self, other: "Scanning") -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
+        rot_perms = self.create_rotation_permutations()
+        max_equal = 0
+        best_angle = (0, 0, 0)
+        best_offset = (0, 0, 0)
+        for i, (angles, rot_perm) in enumerate(rot_perms):
+            equal_count, offset = rot_perm.cross_correlate(other)
+            if equal_count > max_equal:
+                max_equal = equal_count
+                best_angle = angles
+                best_offset = offset
+        return max_equal, best_angle, best_offset
 
     @classmethod
     def read_file(cls, filename: str) -> list["Scanning"]:
