@@ -32,6 +32,26 @@ class Scanning:
     scans: np.ndarray
     id: int = None
 
+    @property
+    @cache
+    def fingerprint(self) -> dict[int, int]:
+        """ Create a fingerprint that is independent of rotation, and can speed up comparisons between Scanners """
+        fingerprint = dict()
+        for i, pos1 in enumerate(self.scans):
+            for pos2 in self.scans[:i]:  # Only compare upper half of matrix (down to i)
+                diff = np.abs(pos2 - pos1)
+                dist = np.sum(diff * diff)
+                dist = int(dist)
+                fingerprint[dist] = fingerprint.get(dist, 0) + 1
+        return fingerprint
+
+    def compare_fingerprint(self, other: "Scanning") -> int:
+        assert isinstance(other, self.__class__)
+        common_distances = set(self.fingerprint.keys()).intersection(set(other.fingerprint.keys()))
+        # The number of common distances they have
+        sum_common_distances = sum(min(self.fingerprint[d], other.fingerprint[d]) for d in common_distances)
+        return sum_common_distances
+
     def rotate(self, alpha: float, beta: float, gamma: float):
         """ Rotate in degrees around either axis """
         rot_mat = create_rot_mat(alpha * math.pi/180, beta * math.pi/180, gamma * math.pi/180)
@@ -93,7 +113,7 @@ class Scanning:
     def __repr__(self):
         return f"<Scanning n_scans={len(self.scans)} id={self.id}>"
 
-    def cross_correlate(self, other: "Scanning") -> tuple[int, tuple[int, int, int]]:
+    def cross_correlate(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int]]:
         max_equal = 0
         offset = (0, 0, 0)
         for row1 in self.scans:
@@ -104,6 +124,8 @@ class Scanning:
                 if len(intersection) > max_equal:
                     max_equal = len(intersection)
                     offset = tuple(row1 - row2)
+                    if threshold is not None and max_equal >= threshold:
+                        return max_equal, offset
 
         return max_equal, offset
 
@@ -112,13 +134,22 @@ class Scanning:
         max_equal = 0
         best_angle = (0, 0, 0)
         best_offset = (0, 0, 0)
+
+        # Do a fast comparison first for early exit
+        common_distances = self.compare_fingerprint(other)
+        if common_distances < 12 * 11 / 2:
+            return max_equal, best_angle, best_offset
+
         for i, (angles, rot_perm) in enumerate(rot_perms):
-            equal_count, offset = rot_perm.cross_correlate(other)
+            equal_count, offset = rot_perm.cross_correlate(other, threshold=12)
             if equal_count > max_equal:
                 max_equal = equal_count
                 best_angle = angles
                 best_offset = offset
         return max_equal, best_angle, best_offset
+
+    def __hash__(self):
+        return self.id
 
     @classmethod
     def read_file(cls, filename: str) -> list["Scanning"]:
