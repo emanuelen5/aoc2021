@@ -92,15 +92,12 @@ class Scanning:
         return f"<Scanning n_scans={len(self.scans)} id={self.id}>"
 
     def cross_correlate(self, other: "Scanning") -> tuple[int, tuple[int, int, int]]:
-        sorting1 = np.array(sorted(self.scans, key=lambda row: (row[0], row[1], row[2])))
-        sorting2 = np.array(sorted(other.scans, key=lambda row: (row[0], row[1], row[2])))
-
         max_equal = 0
         offset = (0, 0, 0)
-        for row1 in sorting1:
-            shifted1 = set((r[0], r[1], r[2]) for r in (sorting1 - row1))
-            for row2 in sorting2:
-                shifted2 = set((r[0], r[1], r[2]) for r in (sorting2 - row2))
+        for row1 in self.scans:
+            shifted1 = set((r[0], r[1], r[2]) for r in (self.scans - row1))
+            for row2 in other.scans:
+                shifted2 = set((r[0], r[1], r[2]) for r in (other.scans - row2))
                 intersection = shifted1.intersection(shifted2)
                 if len(intersection) > max_equal:
                     max_equal = len(intersection)
