@@ -13,7 +13,7 @@ if __name__ == "__main__":
     for i, scanning1 in enumerate(scannings):
         print(i)
         for j, scanning2 in enumerate(scannings):
-            if i==j:
+            if i <= j:
                 continue
             corr_count, corr_angle, corr_offset = scanning1.find_cross_correlation(scanning2)
             if corr_count >= 12:
