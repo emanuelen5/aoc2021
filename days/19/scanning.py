@@ -131,29 +131,38 @@ class Scanning:
     def __len__(self):
         return len(self.scans)
 
-    def cross_correlate(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int]]:
+    def cross_correlate(self, other: "Scanning", similarities: np.ndarray = None, threshold: int = None) -> tuple[int, tuple[int, int, int]]:
         max_equal = 0
         offset = (0, 0, 0)
-        for row1 in self.scans:
-            shifted1 = set((r[0], r[1], r[2]) for r in (self.scans - row1))
-            for row2 in other.scans:
-                shifted2 = set((r[0], r[1], r[2]) for r in (other.scans - row2))
+        if similarities is not None:
+            for i, j in zip(*np.where(similarities >= threshold)):
+                row1 = self.scans[i]
+                row2 = other.scans[j]
+                shifted1 = set(map(tuple, self.scans - row1))
+                shifted2 = set(map(tuple, other.scans - row2))
                 intersection = shifted1.intersection(shifted2)
                 if len(intersection) > max_equal:
                     max_equal = len(intersection)
                     offset = tuple(row1 - row2)
                     if threshold is not None and max_equal >= threshold:
                         return max_equal, offset
-
+        else:
+            for row1 in self.scans:
+                shifted1 = set(map(tuple, self.scans - row1))
+                for row2 in other.scans:
+                    shifted2 = set(map(tuple, other.scans - row2))
+                    intersection = shifted1.intersection(shifted2)
+                    if len(intersection) > max_equal:
+                        max_equal = len(intersection)
+                        offset = tuple(row1 - row2)
+                        if threshold is not None and max_equal >= threshold:
+                            return max_equal, offset
         return max_equal, offset
 
     def find_cross_correlation(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
         max_equal = 0
         best_angle = (0, 0, 0)
         best_offset = (0, 0, 0)
-
-        self_reduced = self
-        other_reduced = other
 
         if threshold:
             # Do a fast comparison first for early exit
@@ -162,25 +171,30 @@ class Scanning:
                 return max_equal, best_angle, best_offset
 
             # Reduce the solution space by removing non-matching samples
-            sim = np.zeros((len(self.fingerprints()), len(other.fingerprints())), dtype=int)
+            similarities = np.zeros((len(self.fingerprints()), len(other.fingerprints())), dtype=int)
             for i, fp1 in enumerate(self.fingerprints()):
                 for j, fp2 in enumerate(other.fingerprints()):
-                    sim[i, j] = fingerprint_similarity(fp1, fp2)
-            keepers0 = np.where(np.amax(sim, axis=1) >= threshold)
-            keepers1 = np.where(np.amax(sim, axis=0) >= threshold)
+                    similarities[i, j] = fingerprint_similarity(fp1, fp2)
+            keepers0 = np.amax(similarities, axis=1) >= threshold
+            keepers1 = np.amax(similarities, axis=0) >= threshold
+
+            if np.count_nonzero(keepers0) < threshold:
+                return max_equal, best_angle, best_offset
+
             self_reduced = Scanning(self.scans[keepers0], self.id)
             other_reduced = Scanning(other.scans[keepers1], other.id)
+            similarities = similarities[keepers0][:, keepers1]
+            return self_reduced.find_cross_correlation_bruteforce(other_reduced, similarities, threshold=threshold)
+        return self.find_cross_correlation_bruteforce(other)
 
-        return self_reduced.find_cross_correlation_bruteforce(other_reduced)
-
-    def find_cross_correlation_bruteforce(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
+    def find_cross_correlation_bruteforce(self, other: "Scanning", similarities: np.ndarray = None, threshold: int = None) -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
         rot_perms = self.create_rotation_permutations()
         max_equal = 0
         best_angle = (0, 0, 0)
         best_offset = (0, 0, 0)
 
         for i, (angles, rot_perm) in enumerate(rot_perms):
-            equal_count, offset = rot_perm.cross_correlate(other, threshold=threshold)
+            equal_count, offset = rot_perm.cross_correlate(other, similarities=similarities, threshold=threshold)
             if equal_count > max_equal:
                 max_equal = equal_count
                 best_angle = angles
