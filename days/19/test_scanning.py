@@ -23,8 +23,7 @@ def test_rotation():
 
 def test_unique_rotation_permutations():
     scanning = Scanning(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), 1)
-    assert scanning.create_rotation_permutations() == scanning.create_rotation_permutations()
-    scannings = scanning.create_rotation_permutations()
+    scannings = list(scanning.create_rotation_permutations())
     for i, (angles1, scan1) in enumerate(scannings):
         for j, (angles2, scan2) in enumerate(scannings):
             if i == j:
@@ -78,7 +77,7 @@ def test_cross_correlate_translation_random_permutation_extras(scanning_origin):
 
 def test_find_cross_correlation_bruteforce(scanning_origin):
     offset = np.array([1, 1, 1])
-    angle, scanning2 = random.choice(scanning_origin.create_rotation_permutations())
+    angle, scanning2 = random.choice(list(scanning_origin.create_rotation_permutations()))
     scanning2 = scanning2 - offset
     count, corr_angle, corr_offset = scanning_origin.find_cross_correlation_bruteforce(scanning2, threshold=None)
     assert count == len(scanning_origin.scans)
@@ -88,7 +87,7 @@ def test_find_cross_correlation_bruteforce(scanning_origin):
 
 def test_find_fast_cross_correlation(scanning_origin):
     offset = np.array([1, 1, 1])
-    angle, scanning2 = random.choice(scanning_origin.create_rotation_permutations())
+    angle, scanning2 = random.choice(list(scanning_origin.create_rotation_permutations()))
     scanning2 = scanning2 - offset
     count, corr_angle, corr_offset = scanning_origin.find_cross_correlation(scanning2, threshold=len(scanning_origin))
     assert count == len(scanning_origin.scans)
