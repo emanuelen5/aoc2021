@@ -6,6 +6,40 @@ from typing import Iterator
 fp_type = dict[int, int]
 
 
+def _find_jump(connections_left: set[tuple[int, int]], at_index, to_index, visited_indices: tuple[int] = tuple()):
+    visited_indices += (at_index, )
+    if at_index == to_index:
+        return visited_indices
+
+    valid_jumps = []
+    for left_conn, right_conn in connections_left:
+        conn_copy = connections_left.copy()
+        conn_copy.remove((left_conn, right_conn))
+        if left_conn == at_index:
+            jump = _find_jump(conn_copy, right_conn, to_index, visited_indices)
+        elif right_conn == at_index:
+            jump = _find_jump(conn_copy, left_conn, to_index, visited_indices)
+        else:
+            jump = None
+        if jump is not None:
+            valid_jumps.append(jump)
+
+    if not valid_jumps:
+        return None
+
+    min_length, min_jumps = len(valid_jumps[0]), valid_jumps[0]
+    for jumps in valid_jumps[1:]:
+        if len(jumps) < min_length:
+            min_length = min(min_length, len(jumps))
+            min_jumps = jumps
+    return min_jumps
+
+
+def _find_jumps_to_scanner(connections: set[tuple[int, int]], to_index) -> list[int]:
+    conn1 = list(sorted(connections))[0]
+    return _find_jump(connections, 0, to_index)
+
+
 def fingerprint_similarity(a: fp_type, b: fp_type) -> int:
     common_distances = set(a.keys()).intersection(set(b.keys()))
     # The number of common distances they have
