@@ -2,7 +2,7 @@ import numpy as np
 from pathlib import Path
 import pytest
 import random
-from scanning import Scanning
+from scanning import Scanning, fingerprint_similarity
 
 _seed = 1
 np.random.seed(_seed)
@@ -76,11 +76,26 @@ def test_cross_correlate_translation_random_permutation_extras(scanning_origin):
     assert corr_offset == tuple(offset)
 
 
-def test_find_cross_correlation(scanning_origin):
+def test_find_cross_correlation_bruteforce(scanning_origin):
     offset = np.array([1, 1, 1])
     angle, scanning2 = random.choice(scanning_origin.create_rotation_permutations())
     scanning2 = scanning2 - offset
-    count, corr_angle, corr_offset = scanning_origin.find_cross_correlation(scanning2, threshold=None)
+    count, corr_angle, corr_offset = scanning_origin.find_cross_correlation_bruteforce(scanning2, threshold=None)
     assert count == len(scanning_origin.scans)
     assert corr_angle == angle
     assert corr_offset == tuple(offset)
+
+
+def test_find_fast_cross_correlation(scanning_origin):
+    offset = np.array([1, 1, 1])
+    angle, scanning2 = random.choice(scanning_origin.create_rotation_permutations())
+    scanning2 = scanning2 - offset
+    count, corr_angle, corr_offset = scanning_origin.find_cross_correlation(scanning2, threshold=len(scanning_origin))
+    assert count == len(scanning_origin.scans)
+    assert corr_angle == angle
+    assert corr_offset == tuple(offset)
+
+
+def test_get_fingerprints(scanning_origin):
+    fingerprints = scanning_origin.fingerprints()
+    assert isinstance(fingerprints, list)

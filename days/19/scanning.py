@@ -2,7 +2,15 @@ from dataclasses import dataclass
 import math
 import numpy as np
 from functools import cache
-from typing import Union
+from typing import Iterator
+fp_type = dict[int, int]
+
+
+def fingerprint_similarity(a: fp_type, b: fp_type) -> int:
+    common_distances = set(a.keys()).intersection(set(b.keys()))
+    # The number of common distances they have
+    sum_common_distances = sum(min(a[d], b[d]) for d in common_distances)
+    return sum_common_distances
 
 
 @cache
@@ -32,9 +40,22 @@ class Scanning:
     scans: np.ndarray
     id: int = None
 
+    @cache
+    def fingerprints(self) -> list[dict[int, int]]:
+        """ Create a fingerprint that is independent of rotation, and can speed up comparisons between Scanners """
+        fingerprints = []
+        for i, pos1 in enumerate(self.scans):
+            diff = np.abs(pos1 - self.scans)
+            dists = np.sum(diff * diff, axis=-1)
+            fp = {}
+            for v in dists:
+                fp[v] = fp.get(v, 0) + 1
+            fingerprints.append(fp)
+        return fingerprints
+
     @property
     @cache
-    def fingerprint(self) -> dict[int, int]:
+    def fingerprint_sum(self) -> dict[int, int]:
         """ Create a fingerprint that is independent of rotation, and can speed up comparisons between Scanners """
         fingerprint = dict()
         for i, pos1 in enumerate(self.scans):
@@ -45,20 +66,13 @@ class Scanning:
                 fingerprint[dist] = fingerprint.get(dist, 0) + 1
         return fingerprint
 
-    def compare_fingerprint(self, other: "Scanning") -> int:
-        assert isinstance(other, self.__class__)
-        common_distances = set(self.fingerprint.keys()).intersection(set(other.fingerprint.keys()))
-        # The number of common distances they have
-        sum_common_distances = sum(min(self.fingerprint[d], other.fingerprint[d]) for d in common_distances)
-        return sum_common_distances
-
     def rotate(self, alpha: float, beta: float, gamma: float):
         """ Rotate in degrees around either axis """
         rot_mat = create_rot_mat(alpha * math.pi/180, beta * math.pi/180, gamma * math.pi/180)
         scans = np.matmul(self.scans, rot_mat)
         return self.__class__(scans, self.id)
 
-    def create_rotation_permutations(self) -> list[tuple[tuple[int, int, int], "Scanning"]]:
+    def create_rotation_permutations(self) -> Iterator[tuple[tuple[int, int, int], "Scanning"]]:
         angle_combinations = [
             # 0
             (0,     0, 0),
@@ -92,7 +106,8 @@ class Scanning:
             (270, 0, -90),
         ]
 
-        return [(angles, self.rotate(*angles)) for angles in angle_combinations]
+        for angles in angle_combinations:
+            yield angles, self.rotate(*angles)
 
     def copy(self) -> "Scanning":
         return Scanning(self.scans.copy(), self.id)
@@ -113,6 +128,9 @@ class Scanning:
     def __repr__(self):
         return f"<Scanning n_scans={len(self.scans)} id={self.id}>"
 
+    def __len__(self):
+        return len(self.scans)
+
     def cross_correlate(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int]]:
         max_equal = 0
         offset = (0, 0, 0)
@@ -130,15 +148,36 @@ class Scanning:
         return max_equal, offset
 
     def find_cross_correlation(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
-        rot_perms = self.create_rotation_permutations()
         max_equal = 0
         best_angle = (0, 0, 0)
         best_offset = (0, 0, 0)
 
-        # Do a fast comparison first for early exit
-        common_distances = self.compare_fingerprint(other)
-        if threshold and common_distances < threshold * (threshold - 1) / 2:
-            return max_equal, best_angle, best_offset
+        self_reduced = self
+        other_reduced = other
+
+        if threshold:
+            # Do a fast comparison first for early exit
+            common_distances = fingerprint_similarity(self.fingerprint_sum, other.fingerprint_sum)
+            if common_distances < threshold * (threshold - 1) / 2:
+                return max_equal, best_angle, best_offset
+
+            # Reduce the solution space by removing non-matching samples
+            sim = np.zeros((len(self.fingerprints()), len(other.fingerprints())), dtype=int)
+            for i, fp1 in enumerate(self.fingerprints()):
+                for j, fp2 in enumerate(other.fingerprints()):
+                    sim[i, j] = fingerprint_similarity(fp1, fp2)
+            keepers0 = np.where(np.amax(sim, axis=1) >= threshold)
+            keepers1 = np.where(np.amax(sim, axis=0) >= threshold)
+            self_reduced = Scanning(self.scans[keepers0], self.id)
+            other_reduced = Scanning(other.scans[keepers1], other.id)
+
+        return self_reduced.find_cross_correlation_bruteforce(other_reduced)
+
+    def find_cross_correlation_bruteforce(self, other: "Scanning", threshold: int = None) -> tuple[int, tuple[int, int, int], tuple[int, int, int]]:
+        rot_perms = self.create_rotation_permutations()
+        max_equal = 0
+        best_angle = (0, 0, 0)
+        best_offset = (0, 0, 0)
 
         for i, (angles, rot_perm) in enumerate(rot_perms):
             equal_count, offset = rot_perm.cross_correlate(other, threshold=threshold)
