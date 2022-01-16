@@ -17,10 +17,12 @@ kernel = [
     [ 64, 128, 256],
 ]
 image = np.array([[1 if v == "#" else 0 for v in line] for line in lines[2:]])
+background_color = 0
 
 def transform(img):
-    print(img.shape, np.count_nonzero(img), img)
-    values = convolve2d(img, kernel, mode='full')
+    global background_color
+    values = convolve2d(img, kernel, mode='full', fillvalue=background_color)
+    background_color = lookup[background_color]
     h, w = values.shape
     output = np.zeros_like(values)
     for i in range(h):
