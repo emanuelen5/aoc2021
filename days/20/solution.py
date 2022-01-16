@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
 import numpy as np
-from scipy.signal import convolve2d
+from scipy.signal import correlate2d
 
 parser = ArgumentParser()
 parser.add_argument("--input-file", "-i", default=Path(__file__).parent / "data.txt")
@@ -12,16 +12,16 @@ with open(args.input_file) as f:
 
 lookup = [1 if v == "#" else 0 for v in lines[0]]
 kernel = [
-    [  1,   2,   4],
-    [  8,  16,  32],
-    [ 64, 128, 256],
+    [256, 128,  64],
+    [ 32,  16,   8],
+    [  4,   2,   1],
 ]
 image = np.array([[1 if v == "#" else 0 for v in line] for line in lines[2:]])
 background_color = 0
 
 def transform(img):
     global background_color
-    values = convolve2d(img, kernel, mode='full', fillvalue=background_color)
+    values = correlate2d(img, kernel, mode='full', fillvalue=background_color)
     background_color = lookup[background_color]
     h, w = values.shape
     output = np.zeros_like(values)
