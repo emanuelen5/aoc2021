@@ -48,4 +48,18 @@ def play_game(start1: int, start2: int) -> tuple[int, int]:
 throws, min_score = play_game(start1, start2)
 
 print(f"Part 1: {throws * min_score}\n")
+
+
+def find_wins(throws, score, win_lookup = {i+1:0 for i in range(21)}):
+    if score >= 21:
+        win_lookup[throws] += 1
+        return win_lookup
+    find_wins(throws+1, score+1, win_lookup)
+    find_wins(throws+1, score+2, win_lookup)
+    find_wins(throws+1, score+3, win_lookup)
+    return win_lookup
+
+wins = find_wins(0, 0)
+print(wins)
+
 print(f"Part 2: {0}\n")
