@@ -22,7 +22,7 @@ background_color = 0
 def transform(img):
     global background_color
     values = correlate2d(img, kernel, mode='full', fillvalue=background_color)
-    background_color = lookup[background_color]
+    background_color = lookup[background_color * np.sum(kernel)]
     h, w = values.shape
     output = np.zeros_like(values)
     for i in range(h):
@@ -30,7 +30,10 @@ def transform(img):
             output[i, j] = lookup[values[i, j]]
     return output
 
-print(f"Part 1: \n{np.count_nonzero(transform(transform(image)))}\n")
-# 5565
 
-print(f"Part 2: {0}\n")
+for i in range(50):
+    image = transform(image)
+    if i == 2:
+        print(f"Part 1: {np.count_nonzero(image)}\n")
+
+print(f"Part 2: {np.count_nonzero(image)}\n")
